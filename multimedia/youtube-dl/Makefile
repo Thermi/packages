@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=youtube-dl
-PKG_VERSION:=2019.11.5
+PKG_VERSION:=2021.2.10
 PKG_RELEASE:=1
 
 PYPI_NAME:=youtube_dl
-PKG_HASH:=25324aab78df9a09b2ee34f642f116933134bc66ea629a778c1fffe05b66f733
+PKG_HASH:=b390cddbd4d605bd887d0d4063988cef0fa13f916d2e1e3564badbb22504d754
 
-PKG_MAINTAINER:=Adrian Panella <ianchi74@outlook.com>, Josef Schlehofer <pepe.schlehofer@gmail.com>
+PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=Unlicense
 PKG_LICENSE_FILES:=LICENSE
 
@@ -35,7 +35,6 @@ define Package/youtube-dl
     +python3-codecs \
     +python3-ctypes \
     +python3-setuptools
-  VARIANT:=python3
 endef
 
 define Package/youtube-dl/description

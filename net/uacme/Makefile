@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=uacme
-PKG_VERSION:=1.0.20
-PKG_RELEASE:=1
+PKG_VERSION:=1.7
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/ndilieto/uacme/tar.gz/upstream/$(PKG_VERSION)?
-PKG_HASH:=c9106e166156685fcf9f164f0b2935cf680251a653f460b04da26a290e946bf9
+PKG_HASH:=32ca99851194cadb16c05f3c5d32892b0b93fc247321de2b560fa0f667e6cf04
 
 PKG_MAINTAINER:=Lucian Cristian <lucian.cristian@gmail.com>
 PKG_LICENSE:=GPL-3.0-or-later
@@ -64,6 +64,7 @@ TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
 CONFIGURE_ARGS+= \
 	--disable-maintainer-mode \
 	--disable-docs \
+	--without-ualpn \
 	$(if $(CONFIG_LIBCURL_GNUTLS),--with-gnutls --without-mbedtls --without-openssl,) \
 	$(if $(CONFIG_LIBCURL_MBEDTLS),--without-gnutls --with-mbedtls --without-openssl,) \
 	$(if $(CONFIG_LIBCURL_OPENSSL),--without-gnutls --without-mbedtls --with-openssl,) \
@@ -88,6 +89,11 @@ define Package/uacme/install
 	$(INSTALL_CONF) ./files/acme.config $(1)/etc/config/acme
 	$(INSTALL_BIN) ./files/run.sh $(1)/usr/share/uacme/run-uacme
 	$(INSTALL_BIN) ./files/acme.init $(1)/etc/init.d/acme
+endef
+
+define Package/uacme/prerm
+#!/bin/sh
+sed -i '/\/etc\/init\.d\/acme start/d' /etc/crontabs/root
 endef
 
 $(eval $(call BuildPackage,uacme))

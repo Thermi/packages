@@ -7,12 +7,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libreswan
-PKG_VERSION:=3.29
-PKG_RELEASE:=2
+PKG_VERSION:=4.3
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://download.libreswan.org/
-PKG_HASH:=d60e4160f43272b6307b697a13f79f56b5ec2bca61d83097ddadd8586a58ab3e
+PKG_HASH:=7ec4c06290b9643a7422b1f2f77c366b79f039117168d6b80cde0b11d76b8970
 
 PKG_MAINTAINER:=Lucian Cristian <lucian.cristian@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
@@ -44,8 +44,8 @@ $(call Package/libreswan/Default)
   DEPENDS:= +IPV6:kmod-ip6-vti +IPV6:kmod-ipsec6 +ip-full +iptables-mod-ipsec \
 	+kmod-crypto-aead +kmod-crypto-authenc +kmod-crypto-gcm \
 	+kmod-crypto-hash +kmod-crypto-rng +kmod-ip-vti +kmod-ipsec \
-	+kmod-ipsec4 +kmod-ipt-ipsec +libevent2 +libevent2-pthreads \
-	+libldns +librt +libunbound-heavy +nss-utils +nspr
+	+kmod-ipsec4 +kmod-ipt-ipsec +kmod-xfrm-interface +libevent2 +libevent2-pthreads \
+	+libldns +librt +libunbound +nss-utils +nspr +libcap-ng
   PROVIDES:=openswan
   CONFLICTS:=strongswan
   TITLE+= IPsec Server
@@ -64,21 +64,27 @@ define Package/libreswan/conffiles
 /etc/ipsec.conf
 /etc/ipsec.secrets
 endef
+TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
+TARGET_CFLAGS += -flto
 
 MAKE_FLAGS+= \
     WERROR_CFLAGS=" " \
+    NSS_REQ_AVA_COPY=false \
     USE_LINUX_AUDIT=false \
     USE_LABELED_IPSEC=false \
     USE_NM=false \
+    USE_NSS_KDF=true \
     USE_LIBCURL=false \
     USE_GLIBC_KERN_FLIP_HEADERS=true \
     USE_XAUTHPAM=false \
-    USE_FIPSCHECK=false \
-    USE_LIBCAP_NG=false \
+    USE_LIBCAP_NG=true \
     USE_SYSTEMD_WATCHDOG=false \
     USE_SECCOMP=false\
-    INC_USRLOCAL="/usr" \
+    USE_XFRM_INTERFACE_IFLA_HEADER=false \
+    PREFIX="/usr" \
     FINALRUNDIR="/var/run/pluto" \
+    FINALNSSDIR="/etc/ipsec.d" \
+    MODPROBEARGS="-q" \
     ARCH="$(LINUX_KARCH)" \
 
 define Build/Prepare

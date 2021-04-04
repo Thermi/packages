@@ -9,17 +9,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=i2pd
-PKG_VERSION:=2.28.0
+PKG_VERSION:=2.36.0
 PKG_RELEASE:=1
-PKG_BUILD_PARALLEL:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/PurpleI2P/i2pd/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=181327edc7cf5b3c25ee51ecc518a4da90fa9e421eca2107996791038a514a21
+PKG_HASH:=17b7309cbee41b991cf9480334495c5a049f709beb1b31fbfcb47de19c8462a3
 
 PKG_MAINTAINER:=David Yang <mmyangfl@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
+
+PKG_BUILD_PARALLEL:=1
+PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -40,10 +42,16 @@ define Package/i2pd/description
 endef
 
 define Package/i2pd/conffiles
-	/etc/config/i2pd
-	/etc/i2pd/i2pd.conf
-	/etc/i2pd/tunnels.conf
-	/etc/i2pd/tunnels.d/*
+/etc/config/i2pd
+/etc/i2pd/i2pd.conf
+/etc/i2pd/tunnels.conf
+/etc/i2pd/tunnels.d/
+endef
+
+define Build/Prepare
+	$(Build/Prepare/Default)
+	# race condition
+	cd $(PKG_BUILD_DIR); $(MAKE) mk_obj_dir
 endef
 
 TARGET_LDFLAGS+=-latomic
@@ -55,7 +63,7 @@ define Package/i2pd/install
 	$(INSTALL_DIR) $(1)/usr/share/i2pd
 	$(CP) $(PKG_BUILD_DIR)/contrib/certificates  $(1)/usr/share/i2pd
 	$(INSTALL_DIR) $(1)/etc/config
-	$(INSTALL_CONF) ./files/i2pd.config $(1)/etc/config/i2pd
+	$(INSTALL_DATA) ./files/i2pd.config $(1)/etc/config/i2pd
 	$(INSTALL_DIR) $(1)/etc/i2pd
 	$(INSTALL_CONF) $(PKG_BUILD_DIR)/contrib/i2pd.conf $(1)/etc/i2pd
 	$(SED) ' \

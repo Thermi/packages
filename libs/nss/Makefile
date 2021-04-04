@@ -7,21 +7,21 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nss
-PKG_VERSION:=3.47
-PKG_RELEASE:=1
+PKG_VERSION:=3.61
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= \
     https://download.cdn.mozilla.net/pub/security/$(PKG_NAME)/releases/NSS_$(subst .,_,$(PKG_VERSION))_RTM/src \
     https://archive.mozilla.org/pub/security/$(PKG_NAME)/releases/NSS_$(subst .,_,$(PKG_VERSION))_RTM/src
-PKG_HASH:=6cd0c4438b616bdacc0b5f25ff1506b0d07ee97ea6c95d514c5487200a155fa7
+PKG_HASH:=312e2d804b34ccf0fec70b57cf8cd6ac853f8ced60df53e30ebb0a7bcd0e1370
 
 PKG_MAINTAINER:=Lucian Cristian <lucian.cristian@gmail.com>
 PKG_LICENCE:=MPL-2.0
 PKG_LICENSE_FILES:=nss/COPYING
 PKG_CPE_ID:=cpe:/a:mozilla:network_security_services
 
-PKG_BUILD_PARALLEL:=0
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -58,37 +58,47 @@ ifeq ($(LBITS),64)
     export USE_64=1
 endif
 
-TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
+ifeq ($(CONFIG_CPU_TYPE),"xscale")
+TARGET_CFLAGS+= -mfloat-abi=softfp
+endif
 
-export CROSS_COMPILE=1
-export BUILD_OPT=1
+ifneq ($(findstring arm,$(CONFIG_ARCH)),)
+ifeq ($(findstring neon,$(CONFIG_CPU_TYPE)),)
+export NSS_DISABLE_ARM32_NEON
+endif
+endif
+
 export NATIVE_CC=$(HOSTCC)
 export NATIVE_FLAGS=$(HOST_CFLAGS)
-export NSDISTMODE=copy
 export NSS_ENABLE_WERROR=0
-export NSS_DISABLE_GTESTS=1
-export NSS_USE_SYSTEM_SQLITE=1
-export OS_TARGET=Linux
-export OS_ARCH=Linux
-export OS_TEST=$(ARCH)
-export CPU_ARCH=$(ARCH)
-export fpic=$(FPIC)
-export NSPR_INCLUDE_DIR=$(STAGING_DIR)/usr/include/nspr
-export SEED_ONLY_DEV_URANDOM=1
-export OS_REL_CFLAGS=$(TARGET_CFLAGS)
-export NS_USE_GCC=1
-export FREEBL_NO_DEPEND=1
-#size optimisation, seems to not impact speed
-export NSS_DISABLE_DBM=1
-export NSS_PKIX_NO_LDAP=1
-export ALLOW_OPT_CODE_SIZE=1
-export OPT_CODE_SIZE=1
+
+MAKE_FLAGS += \
+	CROSS_COMPILE=1 \
+	BUILD_OPT=1 \
+	NSDISTMODE=copy \
+	NSS_DISABLE_GTESTS=1 \
+	NSS_USE_SYSTEM_SQLITE=1 \
+	OS_ARCH=Linux \
+	OS_TEST=$(ARCH) \
+	fpic="$(FPIC)" \
+	NSPR_INCLUDE_DIR=$(STAGING_DIR)/usr/include/nspr \
+	SEED_ONLY_DEV_URANDOM=1 \
+	NS_USE_GCC=1 \
+	FREEBL_NO_DEPEND=1 \
+	NSS_PKIX_NO_LDAP=1 \
+	ALLOW_OPT_CODE_SIZE=1 \
+	OPT_CODE_SIZE=1 \
+	OS_REL_CFLAGS="$(TARGET_CFLAGS)"
 
 #native compile nsinstall
-define Build/Prepare
-	$(call Build/Prepare/Default)
-	USE_NATIVE=1 OS_REL_CFLAGS="$(HOST_CFLAGS)" LDFLAGS="$(HOST_LDFLAGS)" CC="$(HOSTCC)" \
+define Build/Configure
+	USE_NATIVE=1 OS_REL_CFLAGS="$(HOST_CFLAGS)" LDFLAGS="$(HOST_LDFLAGS)" \
+	CC="$(HOSTCC)" CPU_ARCH="$(HOST_ARCH)" \
 	    $(MAKE) -C $(PKG_BUILD_DIR)/nss/coreconf/nsinstall
+endef
+
+define Build/Compile
+	$(call Build/Compile/Default,nss_build_all)
 endef
 
 define Package/libnss/conffiles
@@ -97,6 +107,8 @@ endef
 
 define Build/InstallDev
 	$(INSTALL_DIR) \
+	 $(2)/bin \
+	 $(1)/usr/bin \
 	 $(1)/usr/include/nss \
 	 $(1)/usr/lib \
 	 $(1)/usr/lib/pkgconfig
@@ -108,6 +120,12 @@ define Build/InstallDev
 	  $(1)/usr/lib/
 	$(CP) $(PKG_BUILD_DIR)/nss/config/*.pc \
 	  $(1)/usr/lib/pkgconfig/
+	$(CP) $(PKG_BUILD_DIR)/nss/config/nss-config \
+	  $(1)/usr/bin/
+	$(SED) 's,^\(prefix\)=.*,\1=$(STAGING_DIR)/usr,g' \
+	  $(1)/usr/bin/nss-config
+	$(LN) ../../usr/bin/nss-config \
+	  $(2)/bin/
 endef
 
 define Package/nss-utils/install
@@ -126,6 +144,7 @@ define Package/libnss/install
 
 	$(CP) $(PKG_BUILD_DIR)/dist/build_dir/lib/libfreebl3.so $(1)/usr/lib/
 	$(CP) $(PKG_BUILD_DIR)/dist/build_dir/lib/libnss3.so $(1)/usr/lib/
+	$(CP) $(PKG_BUILD_DIR)/dist/build_dir/lib/libnssckbi.so $(1)/usr/lib/
 	$(CP) $(PKG_BUILD_DIR)/dist/build_dir/lib/libnssutil3.so $(1)/usr/lib/
 	$(CP) $(PKG_BUILD_DIR)/dist/build_dir/lib/libsmime3.so $(1)/usr/lib/
 	$(CP) $(PKG_BUILD_DIR)/dist/build_dir/lib/libsoftokn3.so $(1)/usr/lib/

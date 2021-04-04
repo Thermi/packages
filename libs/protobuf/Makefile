@@ -8,26 +8,23 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=protobuf
-PKG_VERSION:=3.8.0
-PKG_RELEASE:=4
+PKG_VERSION:=3.15.6
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-cpp-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/google/protobuf/releases/download/v$(PKG_VERSION)
-PKG_HASH:=ddc96d83f3b7417da53bce2510b94ad2796465ef8763f7a4e82089157efe97aa
+PKG_HASH:=bbdfb7455431d7d58666e8a2996d14b236718ff238eecde10646581e4c87f168
 
 PKG_MAINTAINER:=Ken Keys <kkeys@caida.org>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:google:protobuf
 
-HOST_BUILD_PARALLEL:=1
-PKG_BUILD_PARALLEL:=1
-CMAKE_INSTALL:=1
 CMAKE_SOURCE_SUBDIR:=cmake
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
-include $(INCLUDE_DIR)/cmake.mk
+include ../../devel/ninja/ninja-cmake.mk
 
 define Package/protobuf/Default
   SECTION:=libs
@@ -72,6 +69,7 @@ CMAKE_HOST_OPTIONS += \
 	-Dprotobuf_BUILD_TESTS=OFF \
 	-DBUILD_SHARED_LIBS=ON \
 	-DCMAKE_SKIP_RPATH=OFF \
+	-DCMAKE_INSTALL_LIBDIR=lib \
 	-DCMAKE_INSTALL_RPATH="${STAGING_DIR_HOSTPKG}/lib"
 
 CMAKE_OPTIONS += \
@@ -80,7 +78,7 @@ CMAKE_OPTIONS += \
 	-Dprotobuf_WITH_ZLIB=ON \
 	-DBUILD_SHARED_LIBS=ON
 
-TARGET_LDFLAGS += -latomic
+TARGET_LDFLAGS += -latomic $(if $(CONFIG_USE_GLIBC),-lm)
 
 define Build/InstallDev
 	$(call Build/InstallDev/cmake,$(1))

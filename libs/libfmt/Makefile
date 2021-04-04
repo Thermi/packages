@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libfmt
-PKG_VERSION:=6.0.0
+PKG_VERSION:=7.1.3
 PKG_RELEASE:=1
 
 PKG_SOURCE_NAME:=fmt
 PKG_SOURCE:=$(PKG_SOURCE_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/fmtlib/$(PKG_SOURCE_NAME)/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=f1907a58d5e86e6c382e51441d92ad9e23aea63827ba47fd647eacc0d3a16c78
+PKG_HASH:=5cae7072042b3043e12d53d50ef404bbb76949dad1de368d7f993a15c8c05ecc
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_SOURCE_NAME)-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Othmar Truniger <github@truniger.ch>
@@ -24,7 +24,7 @@ PKG_LICENSE_FILES:=LICENSE.rst
 CMAKE_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/cmake.mk
+include ../../devel/ninja/ninja-cmake.mk
 
 CMAKE_OPTIONS += -DBUILD_SHARED_LIBS=ON
 CMAKE_OPTIONS += -DFMT_DOC=OFF

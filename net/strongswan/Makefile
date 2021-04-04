@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=strongswan
-PKG_VERSION:=5.8.1
-PKG_RELEASE:=1
+PKG_VERSION:=5.9.1
+PKG_RELEASE:=8
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://download.strongswan.org/ https://download2.strongswan.org/
-PKG_HASH:=d9af70acea5c054952ad1584916c1bf231b064eb6c8a9791dcb6ae90a769990c
+PKG_HASH:=a337c9fb63d973b8440827755c784031648bf423b7114a04918b0b00fd42cafb
 PKG_LICENSE:=GPL-2.0-or-later
-PKG_MAINTAINER:=Stijn Tintel <stijn@linux-ipv6.be>
+PKG_MAINTAINER:=Philip Prindeville <philipp@redfish-solutions.com>, Noel Kuntze <noel.kuntze@thermi.consulting>
 PKG_CPE_ID:=cpe:/a:strongswan:strongswan
 
 PKG_MOD_AVAILABLE:= \
@@ -447,24 +447,16 @@ CONFIGURE_ARGS+= \
 EXTRA_LDFLAGS+= -Wl,-rpath-link,$(STAGING_DIR)/usr/lib
 
 define Package/strongswan/conffiles
-/etc/ipsec.d/
-/etc/ipsec.conf
-/etc/ipsec.secrets
-/etc/ipsec.user
 /etc/strongswan.conf
 /etc/strongswan.d/
 endef
 
 define Package/strongswan/install
 	$(INSTALL_DIR) $(1)/etc
-	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/ipsec.conf $(1)/etc/
 	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/strongswan.conf $(1)/etc/
+	echo -e "\ninclude /var/ipsec/strongswan.conf" >> $(1)/etc/strongswan.conf
 	$(INSTALL_DIR) $(1)/usr/lib/ipsec
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ipsec/libstrongswan.so.* $(1)/usr/lib/ipsec/
-	$(INSTALL_CONF) ./files/ipsec.secrets $(1)/etc/
-	$(INSTALL_CONF) ./files/ipsec.user $(1)/etc/
-	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_BIN) ./files/ipsec.init $(1)/etc/init.d/ipsec
 endef
 
 define Package/strongswan-default/install
@@ -497,9 +489,33 @@ define Package/strongswan-charon-cmd/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/charon-cmd $(1)/usr/sbin/
 endef
 
+define Package/strongswan-ipsec/conffiles
+/etc/ipsec.d/
+/etc/ipsec.conf
+/etc/ipsec.secrets
+/etc/ipsec.user
+endef
+
 define Package/strongswan-ipsec/install
-	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_DIR) $(1)/etc/ $(1)/usr/sbin
+	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/ipsec.conf $(1)/etc/
+	echo -e "\ninclude /var/ipsec/ipsec.conf" >> $(1)/etc/ipsec.conf
+	$(INSTALL_CONF) ./files/ipsec.secrets $(1)/etc/
+	echo -e "\ninclude /var/ipsec/ipsec.secrets" >> $(1)/etc/ipsec.secrets
+	$(INSTALL_CONF) ./files/ipsec.user $(1)/etc/
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/ipsec.init $(1)/etc/init.d/ipsec
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/ipsec $(1)/usr/sbin/
+endef
+
+define Package/strongswan-ipsec/postinst
+#!/bin/sh
+
+[ -z "$${IPKG_INSTROOT}" ] || exit 0
+
+opkg list-changed-conffiles | grep -qx /etc/ipsec.conf || {
+	rm -f /etc/ipsec.conf-opkg
+}
 endef
 
 define Package/strongswan-pki/install
@@ -516,12 +532,19 @@ define Package/strongswan-scepclient/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/ipsec/scepclient $(1)/usr/lib/ipsec/
 endef
 
+define Package/strongswan-swanctl/conffiles
+/etc/swanctl/
+endef
+
 define Package/strongswan-swanctl/install
-	$(INSTALL_DIR) $(1)/etc/swanctl/{bliss,ecdsa,pkcs{12,8},private,pubkey,rsa}
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_DIR) $(1)/etc/swanctl/{bliss,conf.d,ecdsa,pkcs{12,8},private,pubkey,rsa}
 	$(INSTALL_DIR) $(1)/etc/swanctl/x509{,aa,ac,ca,crl,ocsp}
 	$(CP) $(PKG_INSTALL_DIR)/etc/swanctl/swanctl.conf $(1)/etc/swanctl/
+	echo "include /var/swanctl/swanctl.conf" >> $(1)/etc/swanctl/swanctl.conf
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/swanctl $(1)/usr/sbin/
+	$(INSTALL_BIN) ./files/swanctl.init $(1)/etc/init.d/swanctl
 endef
 
 define Package/strongswan-libtls/install

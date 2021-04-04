@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-http-cookies
-PKG_VERSION:=6.04
+PKG_VERSION:=6.08
 PKG_RELEASE:=1
 
 PKG_SOURCE:=HTTP-Cookies-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://cpan.metacpan.org/authors/id/O/OA/OALDERS
-PKG_HASH:=0cc7f079079dcad8293fea36875ef58dd1bfd75ce1a6c244cd73ed9523eb13d4
+PKG_HASH:=49ebb73576eb41063c04bc079477df094496deec805ae033f3be338c23c3af59
 PKG_BUILD_DIR:=$(BUILD_DIR)/perl/HTTP-Cookies-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>

@@ -6,21 +6,22 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pkgconf
-PKG_VERSION:=1.6.3
-PKG_RELEASE:=1
+PKG_VERSION:=1.7.4
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://distfiles.dereferenced.org/pkgconf
-PKG_HASH:=61f0b31b0d5ea0e862b454a80c170f57bad47879c0c42bd8de89200ff62ea210
+PKG_HASH:=d73f32c248a4591139a6b17777c80d4deab6b414ec2b3d21d0a24be348c476ab
 
 PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
 
 PKG_INSTALL:=1
-PKG_BUILD_PARALLEL:=1
+PKG_BUILD_DEPENDS:=meson/host
 
 include $(INCLUDE_DIR)/package.mk
+include ../../devel/meson/meson.mk
 
 define Package/libpkgconf
   SECTION:=libs
@@ -49,6 +50,19 @@ define Package/pkgconf/description
   for development frameworks. It is similar to pkg-config from
   freedesktop.org, providing additional functionality while also
   maintaining compatibility.
+endef
+
+MESON_ARGS += \
+	-Dtests=false
+
+define Build/InstallDev
+	$(INSTALL_DIR) $(1)/usr/include/libpkgconf
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/pkgconf/libpkgconf/*.h $(1)/usr/include/libpkgconf
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpkgconf.so* $(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/usr/share/aclocal/
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/aclocal/pkg.m4 \
+	  $(1)/usr/share/aclocal/
 endef
 
 define Package/libpkgconf/install

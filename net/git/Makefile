@@ -8,18 +8,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=git
-PKG_VERSION:=2.23.0
+PKG_VERSION:=2.30.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/software/scm/git/
-PKG_HASH:=234fa05b6839e92dc300b2dd78c92ec9c0c8d439f65e1d430a7034f60af16067
+PKG_HASH:=41f7d90c71f9476cd387673fcb10ce09ccbed67332436a4cc58d7af32c355faa
 
-PKG_INSTALL:=1
+PKG_LICENSE:=GPL-2.0-or-later
+PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:git-scm:git
+
 PKG_FIXUP:=autoreconf
+PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
-
-PKG_CPE_ID:=cpe:/a:git:git
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -98,7 +100,8 @@ MAKE_FLAGS := \
 	GITWEB_JS="/gitweb/gitweb.js" \
 	GITWEB_CSS="/gitweb/gitweb.css" \
 	GITWEB_LOGO="/gitweb/gitweb-logo.png" \
-	GITWEB_FAVICON="/gitweb/gitweb-favicon.png"
+	GITWEB_FAVICON="/gitweb/gitweb-favicon.png" \
+	uname_S="Linux" \
 
 CONFIGURE_ARGS += \
 	--without-iconv \

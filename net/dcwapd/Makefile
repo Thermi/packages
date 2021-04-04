@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dcwapd
 PKG_VERSION:=1.1.0
-PKG_RELEASE:=1
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/ewsi/$(PKG_NAME)/tar.gz/v$(PKG_VERSION)?
@@ -23,7 +23,6 @@ PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
-include $(INCLUDE_DIR)/uclibc++.mk
 include $(INCLUDE_DIR)/package.mk
 
 define Package/dcwapd
@@ -32,7 +31,7 @@ define Package/dcwapd
   SUBMENU:=Routing and Redirection
   TITLE:=Dual-Channel WiFi AP daemon
   URL:=https://www.edgewaterwireless.com
-  DEPENDS:=$(CXX_DEPENDS) +kmod-macremapper +libdcwsocket +libdcwproto +mrmctl +libuci
+  DEPENDS:=+libstdcpp +kmod-macremapper +libdcwsocket +libdcwproto +mrmctl +libuci
 endef
 
 define Package/dcwapd/description
@@ -51,6 +50,10 @@ define Build/InstallDev
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/* $(1)/usr/lib/
 endef
 
+define Package/dcwapd/conffiles
+/etc/config/dcwapd
+endef
+
 define Package/dcwapd/install
 	$(INSTALL_DIR) $(1)/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/$(PKG_NAME) $(1)/bin/
@@ -58,19 +61,12 @@ define Package/dcwapd/install
 	# Note: $(INSTALL_BIN) does not keep symlinks, so use $(CP)
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/*.so* $(1)/usr/lib/
 
-#	Utility files
-	$(INSTALL_DIR) $(1)/etc/$(PKG_NAME)
-	$(INSTALL_DATA) ./files/*.inc $(1)/etc/$(PKG_NAME)/
-	$(INSTALL_BIN) ./files/*.sh $(1)/etc/$(PKG_NAME)/
-#	UCI config file copy - this is here for convenience and reference only
-	$(INSTALL_DATA) ./files/dcwapd.uci $(1)/etc/$(PKG_NAME)/
-
 #	UCI config file
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_DATA) ./files/dcwapd.uci $(1)/etc/config/dcwapd
 
 #	Init script
 	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_BIN) ./files/dcwapd.init.d $(1)/etc/init.d/dcwapd
+	$(INSTALL_BIN) ./files/dcwapd.init $(1)/etc/init.d/dcwapd
 endef
 $(eval $(call BuildPackage,dcwapd))

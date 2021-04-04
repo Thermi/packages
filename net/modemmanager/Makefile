@@ -8,26 +8,23 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=modemmanager
-PKG_VERSION:=1.12.0
-PKG_RELEASE:=2
+PKG_VERSION:=1.16.2
+PKG_RELEASE:=1
 
 PKG_SOURCE:=ModemManager-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.freedesktop.org/software/ModemManager
-PKG_HASH:=3daca86164145fffb589939433f596c13fa077c9a187c0d5820fdd5b4e4a6424
+PKG_HASH:=efa9a963499e0885f3f163096d433334143c4937545134ecd682e0157fa591e3
 PKG_BUILD_DIR:=$(BUILD_DIR)/ModemManager-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Nicholas Smith <nicholas.smith@telcoantennas.com.au>
-LICENSE:=GPL-2.0-or-later
-LICENSE_FILES:=COPYING
+PKG_LICENSE:=GPL-2.0-or-later
+PKG_LICENSE_FILES:=COPYING
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
-PKG_BUILD_DEPENDS:=glib2/host libxslt/host
-
-PKG_FIXUP:=autoreconf
-
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/nls.mk
 
 define Package/modemmanager/config
   source "$(SOURCE)/Config.in"
@@ -42,6 +39,7 @@ define Package/modemmanager
 	$(INTL_DEPENDS) \
 	+glib2 \
 	+dbus \
+	+ppp \
 	+MODEMMANAGER_WITH_MBIM:libmbim \
 	+MODEMMANAGER_WITH_QMI:libqmi
 endef
@@ -55,10 +53,13 @@ endef
 CONFIGURE_ARGS += \
 	--without-polkit \
 	--without-udev \
-	--without-suspend-resume \
-	--with-systemdsystemunitdir=no \
+	--without-systemdsystemunitdir \
 	--disable-rpath \
-	--disable-gtk-doc 
+	--disable-gtk-doc
+
+ifeq ($(CONFIG_MODEMMANAGER_WITH_AT_COMMAND_VIA_DBUS),y)
+  CONFIGURE_ARGS += --with-at-command-via-dbus
+endif
 
 ifdef CONFIG_MODEMMANAGER_WITH_MBIM
   CONFIGURE_ARGS += --with-mbim
@@ -77,10 +78,6 @@ define Build/Prepare
 	( cd "$(PKG_BUILD_DIR)"; \
 		printf "all:\ninstall:\n" >po/Makefile.in.in; \
 	)
-	$(SED) 's|^\(GLIB_MKENUMS\)=.*|\1=$(STAGING_DIR_HOSTPKG)/bin/glib-mkenums|' \
-		$(PKG_BUILD_DIR)/configure.ac
-	$(SED) 's|^\(GDBUS_CODEGEN\)=.*|\1=$(STAGING_DIR_HOSTPKG)/bin/gdbus-codegen|' \
-		$(PKG_BUILD_DIR)/configure.ac
 endef
 
 define Build/InstallDev
@@ -109,6 +106,7 @@ define Package/modemmanager/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libmm-glib.so.* $(1)/usr/lib
 
 	$(INSTALL_DIR) $(1)/usr/lib/ModemManager
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ModemManager/libmm-shared-*.so* $(1)/usr/lib/ModemManager
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ModemManager/libmm-plugin-*.so* $(1)/usr/lib/ModemManager
 
 	$(INSTALL_DIR) $(1)/etc/dbus-1/system.d
@@ -119,18 +117,19 @@ define Package/modemmanager/install
 
 	$(INSTALL_DIR) $(1)/usr/share/ModemManager
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/ModemManager/*.conf $(1)/usr/share/ModemManager
+	$(INSTALL_DATA) ./files/modemmanager.common $(1)/usr/share/ModemManager
 
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/modemmanager.init $(1)/etc/init.d/modemmanager
+
+	$(INSTALL_DIR) $(1)/etc/hotplug.d/usb
+	$(INSTALL_DATA) ./files/25-modemmanager-usb $(1)/etc/hotplug.d/usb
 
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/net
 	$(INSTALL_DATA) ./files/25-modemmanager-net $(1)/etc/hotplug.d/net
 
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/tty
 	$(INSTALL_DATA) ./files/25-modemmanager-tty $(1)/etc/hotplug.d/tty
-
-	$(INSTALL_DIR) $(1)/etc/modemmanager
-	$(INSTALL_DATA) ./files/modemmanager.common $(1)/etc/modemmanager/modemmanager.common
 
 	$(INSTALL_DIR) $(1)/lib/netifd/proto
 	$(INSTALL_BIN) ./files/modemmanager.proto $(1)/lib/netifd/proto/modemmanager.sh

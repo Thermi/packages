@@ -36,14 +36,37 @@ MESON_BUILD_DIR:=$(PKG_BUILD_DIR)/openwrt-build
 MESON_VARS:=
 MESON_ARGS:=
 
+ifneq ($(findstring i386,$(CONFIG_ARCH)),)
+MESON_ARCH:="x86"
+else ifneq ($(findstring powerpc64,$(CONFIG_ARCH)),)
+MESON_ARCH:="ppc64"
+else ifneq ($(findstring powerpc,$(CONFIG_ARCH)),)
+MESON_ARCH:="ppc"
+else ifneq ($(findstring mips64el,$(CONFIG_ARCH)),)
+MESON_ARCH:="mips64"
+else ifneq ($(findstring mipsel,$(CONFIG_ARCH)),)
+MESON_ARCH:="mips"
+else ifneq ($(findstring armeb,$(CONFIG_ARCH)),)
+MESON_ARCH:="arm"
+else
+MESON_ARCH:=$(CONFIG_ARCH)
+endif
+
+# this is undefined for just x64_64
+ifeq ($(origin CPU_TYPE),undefined)
+MESON_CPU:="generic"
+else
+MESON_CPU:="$(CPU_TYPE)$(if $(CPU_SUBTYPE),+$(CPU_SUBTYPE))"
+endif
+
 define Meson
 	$(2) $(STAGING_DIR_HOST)/bin/$(PYTHON) $(MESON_DIR)/meson.py $(1)
 endef
 
 define Meson/CreateNativeFile
 	$(STAGING_DIR_HOST)/bin/sed \
-		-e "s|@CC@|$(HOSTCC)|" \
-		-e "s|@CXX@|$(HOSTCXX)|" \
+		-e "s|@CC@|$(foreach BIN,$(HOSTCC),'$(BIN)',)|" \
+		-e "s|@CXX@|$(foreach BIN,$(HOSTCXX),'$(BIN)',)|" \
 		-e "s|@PKGCONFIG@|$(PKG_CONFIG)|" \
 		-e "s|@CFLAGS@|$(foreach FLAG,$(HOST_CFLAGS) $(HOST_CPPFLAGS),'$(FLAG)',)|" \
 		-e "s|@CXXFLAGS@|$(foreach FLAG,$(HOST_CXXFLAGS) $(HOST_CPPFLAGS),'$(FLAG)',)|" \
@@ -55,18 +78,17 @@ endef
 
 define Meson/CreateCrossFile
 	$(STAGING_DIR_HOST)/bin/sed \
-		-e "s|@CC@|$(TARGET_CC)|" \
-		-e "s|@CXX@|$(TARGET_CXX)|" \
+		-e "s|@CC@|$(foreach BIN,$(TARGET_CC),'$(BIN)',)|" \
+		-e "s|@CXX@|$(foreach BIN,$(TARGET_CXX),'$(BIN)',)|" \
 		-e "s|@AR@|$(TARGET_AR)|" \
 		-e "s|@STRIP@|$(TARGET_CROSS)strip|" \
 		-e "s|@NM@|$(TARGET_NM)|" \
-		-e "s|@LD@|$(TARGET_CROSS)ld|" \
 		-e "s|@PKGCONFIG@|$(PKG_CONFIG)|" \
 		-e "s|@CFLAGS@|$(foreach FLAG,$(TARGET_CFLAGS) $(EXTRA_CFLAGS) $(TARGET_CPPFLAGS) $(EXTRA_CPPFLAGS),'$(FLAG)',)|" \
 		-e "s|@CXXFLAGS@|$(foreach FLAG,$(TARGET_CXXFLAGS) $(EXTRA_CXXFLAGS) $(TARGET_CPPFLAGS) $(EXTRA_CPPFLAGS),'$(FLAG)',)|" \
 		-e "s|@LDFLAGS@|$(foreach FLAG,$(TARGET_LDFLAGS) $(EXTRA_LDFLAGS),'$(FLAG)',)|" \
-		-e "s|@ARCH@|$(ARCH)|" \
-		-e "s|@CPU@|$(CONFIG_TARGET_SUBTARGET)|" \
+		-e "s|@ARCH@|$(MESON_ARCH)|" \
+		-e "s|@CPU@|$(MESON_CPU))|" \
 		-e "s|@ENDIAN@|$(if $(CONFIG_BIG_ENDIAN),big,little)|" \
 		< $(MESON_DIR)/openwrt-cross.txt.in \
 		> $(1)
@@ -103,7 +125,7 @@ define Build/Configure/Meson
 		--cross-file $(PKG_BUILD_DIR)/openwrt-cross.txt \
 		$(MESON_ARGS) \
 		$(MESON_BUILD_DIR) \
-		$(PKG_BUILD_DIR), \
+		$(MESON_BUILD_DIR)/.., \
 		$(MESON_VARS))
 endef
 

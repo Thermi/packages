@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-www
-PKG_VERSION:=6.39
-PKG_RELEASE:=1
+PKG_VERSION:=6.43
+PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=https://cpan.metacpan.org/authors/id/O/OA/OALDERS
 PKG_SOURCE:=libwww-perl-$(PKG_VERSION).tar.gz
-PKG_HASH:=9a8d7747938aa75d7d524c71574ae7f99ca66a5dac8255a7f7759f373e7774d5
+PKG_HASH:=e9849d7ee6fd0e89cc999e63d7612c951afd6aeea6bc721b767870d9df4ac40d
 PKG_BUILD_DIR:=$(BUILD_DIR)/perl/libwww-perl-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
@@ -30,7 +30,7 @@ define Package/perl-www
   CATEGORY:=Languages
   TITLE:=WWW client/server library for Perl (aka LWP)
   URL:=https://search.cpan.org/dist/libwww-perl/
-  DEPENDS:=perl +perl-encode-locale +perl-file-listing +perl-html-parser +perl-http-cookies +perl-http-daemon +perl-http-date +perl-http-message +perl-http-negotiate +perl-lwp-mediatypes +perl-net-http +perl-uri +perl-www-robotrules +perlbase-base +perlbase-digest +perlbase-encode +perlbase-essential +perlbase-io +perlbase-mime +perlbase-net
+  DEPENDS:=perl +perl-encode-locale +perl-file-listing +perl-html-parser +perl-http-cookies +perl-http-daemon +perl-http-date +perl-http-message +perl-http-negotiate +perl-lwp-mediatypes +perl-net-http +perl-try-tiny +perl-uri +perl-www-robotrules +perlbase-base +perlbase-digest +perlbase-encode +perlbase-essential +perlbase-io +perlbase-mime +perlbase-net
 endef
 
 define Build/Configure

@@ -56,6 +56,7 @@ PKG_MOD_AVAILABLE:= \
 	hmac \
 	kernel-libipsec \
 	kernel-netlink \
+	kdf \
 	ldap \
 	led \
 	load-tester \
